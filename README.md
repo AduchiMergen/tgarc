@@ -1,5 +1,10 @@
 # tgarc
 A command line tool for archiving Telegram JSON
+#### Установка
+    pipx install git+https://github.com/AduchiMergen/tgarc.git
+  или 
+  
+    pip install git+https://github.com/AduchiMergen/tgarc.git
 
 #### Настройка
 
