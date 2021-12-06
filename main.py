@@ -98,7 +98,9 @@ def save(src, **kwargs):
     """сохранение группы чатов и каналов по их имени или по ссылкам"""
     dir_name = kwargs.get('output')
     if not dir_name:
-        dir_name = f'tgarc-{datetime.datetime.now().isoformat()}'
+        now = datetime.datetime.now()
+        date_string = now.strftime('%Y%m%d_%H%M%S')
+        dir_name = f'tgarc-{date_string}'
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
     kwargs['dir_name'] = dir_name
@@ -174,7 +176,7 @@ def save_chat(app, chat, options=None, offset_id=None):
     }
     with click.progressbar(length=count,
                            label='         Messages: ') as bar:
-        with open(f'{dir_name}/messages.jsonl', 'w') as f:
+        with open(f'{dir_name}/messages.jsonl', 'w', encoding='utf-8') as f:
             history = app.iter_history(chat.id, offset_id=offset_id, limit=MESSAGE_LIMIT, reverse=True)
             while history:
                 for message in history:
