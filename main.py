@@ -9,7 +9,7 @@ import click
 
 from pathlib import Path
 from pyrogram import Client
-from pyrogram.types import Object
+from pyrogram.types import Object, User
 
 MESSAGE_LIMIT = 100
 
@@ -57,7 +57,7 @@ def configure(api_id, api_hash):
         click.echo(f'Logged as {me.first_name} {me.last_name} @{me.username}')
 
 
-def show_params(user, kwargs):
+def show_params(user: User, kwargs):
     click.echo(f"""
     Archive tg channels and chats.
     
@@ -101,6 +101,7 @@ def save(src, **kwargs):
         now = datetime.datetime.now()
         date_string = now.strftime('%Y%m%d_%H%M%S')
         dir_name = f'tgarc-{date_string}'
+    dir_name = Path.cwd() / dir_name
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
     kwargs['dir_name'] = dir_name

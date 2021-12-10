@@ -2,11 +2,11 @@ from setuptools import setup
 
 setup(
     name='tgarc',
-    version='0.1.1',
+    version='0.1.2',
     py_modules=['main'],
     install_requires=[
         'Click',
-        'Pyrogram',
+        'pyrogram @ git+https://github.com/AduchiMergen/pyrogram.git',
         'tgcrypto',
     ],
     entry_points={
