@@ -8,6 +8,7 @@ import os
 import click
 
 from pathlib import Path
+
 from pyrogram import Client
 from pyrogram.types import Object, User
 
@@ -35,7 +36,14 @@ def get_update_path():
 
 
 def get_pyrogram_client():
-    return Client("tgarc", workdir=str(get_work_dir()), config_file=str(get_config_path()))
+    config = configparser.ConfigParser()
+    config.read(get_config_path())
+    return Client(
+        "tgarc",
+        workdir=str(get_work_dir()),
+        api_id=config['pyrogram']['api_id'],
+        api_hash=config['pyrogram']['api_hash'],
+    )
 
 
 @cli.command()
@@ -146,13 +154,14 @@ def download_media(app, media, dir_name, max_size):
 
 def save_chat(app, chat, options=None, offset_id=None):
     if not offset_id:
-        count = app.get_history_count(chat.id)
+        count = app.get_chat_history_count(chat.id)
+        offset_id = 1
     else:
-        history = app.get_history(chat.id, limit=1)
+        history = list(app.get_chat_history(chat.id, limit=1))
         if not history:
             click.echo('         No messages')
             return
-        count = history[0].message_id - offset_id
+        count = history[0].id - offset_id
         if count <= 0:
             click.echo('         No messages')
             return
@@ -178,9 +187,9 @@ def save_chat(app, chat, options=None, offset_id=None):
     with click.progressbar(length=count,
                            label='         Messages: ') as bar:
         with open(f'{dir_name}/messages.jsonl', 'w', encoding='utf-8') as f:
-            history = app.iter_history(chat.id, offset_id=offset_id, limit=MESSAGE_LIMIT, reverse=True)
+            history = list(app.get_chat_history(chat.id, offset_id=offset_id, limit=MESSAGE_LIMIT, offset=-MESSAGE_LIMIT))
             while history:
-                for message in history:
+                for message in reversed(history):
                     f.write(json.dumps(message, default=Object.default, ensure_ascii=False))
                     f.write('\n')
                     for media in ('video', 'photo', 'audio', 'document', 'sticker', 'animation', 'voice', 'video_note'):
@@ -190,8 +199,8 @@ def save_chat(app, chat, options=None, offset_id=None):
                             else:
                                 files_for_download['files'].append(getattr(message, media))
                     bar.update(1)
-                offset_id = message.message_id + 1
-                history = app.iter_history(chat.id, offset_id=offset_id, limit=MESSAGE_LIMIT, reverse=True)
+                offset_id = message.id + 1
+                history = list(app.get_chat_history(chat.id, offset_id=offset_id, limit=MESSAGE_LIMIT, offset=-MESSAGE_LIMIT))
 
     if video:
         with click.progressbar(files_for_download['video'],
