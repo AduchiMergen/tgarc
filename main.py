@@ -9,8 +9,10 @@ import click
 
 from pathlib import Path
 
+from pick import Option, pick
 from pyrogram import Client
 from pyrogram.types import Object, User
+
 
 MESSAGE_LIMIT = 100
 
@@ -86,6 +88,7 @@ def show_params(user: User, kwargs):
 
 @cli.command()
 @click.argument('src', nargs=-1)
+@click.option('--private', is_flag=True, default=False)
 @click.option('--video/--no-video', help='не выгружать видео медиа-файлы', default=True)
 @click.option('--pictures/--no-pictures', help='не выгружать фотографии', default=True)
 @click.option('--files/--no-files', help='не выгружать остальные типы файлов (не видео и не фотографии)',
@@ -126,8 +129,16 @@ def save(src, **kwargs):
         update_config['message_id'] = dict()
 
     with get_pyrogram_client() as app:
+
         me = app.get_me()
         show_params(me, kwargs)
+        if kwargs.get('private'):
+            click.echo(f"Private mode\nLoading dialogs...")
+            private_dialogs = filter(lambda x: x.chat.has_protected_content, app.get_dialogs())
+            options = [Option(label=dialog.chat.title, value=dialog.chat.id) for dialog in private_dialogs]
+            selected = pick(options, title='Select by <Space> and press <Enter>', multiselect=True, min_selection_count=1)
+            src = (option[0].value for option in selected)
+
         for chat in src:
             try:
                 chat = app.get_chat(chat)
@@ -184,10 +195,13 @@ def save_chat(app, chat, options=None, offset_id=None):
         'photo': list(),
         'files': list(),
     }
+    limit = min(count, MESSAGE_LIMIT)
     with click.progressbar(length=count,
                            label='         Messages: ') as bar:
         with open(f'{dir_name}/messages.jsonl', 'w', encoding='utf-8') as f:
-            history = list(app.get_chat_history(chat.id, offset_id=offset_id, limit=MESSAGE_LIMIT, offset=-MESSAGE_LIMIT))
+            history = list(app.get_chat_history(
+                chat.id, offset_id=offset_id, limit=limit, offset=-limit)
+            )
             while history:
                 for message in reversed(history):
                     f.write(json.dumps(message, default=Object.default, ensure_ascii=False))
@@ -200,7 +214,7 @@ def save_chat(app, chat, options=None, offset_id=None):
                                 files_for_download['files'].append(getattr(message, media))
                     bar.update(1)
                 offset_id = message.id + 1
-                history = list(app.get_chat_history(chat.id, offset_id=offset_id, limit=MESSAGE_LIMIT, offset=-MESSAGE_LIMIT))
+                history = list(app.get_chat_history(chat.id, offset_id=offset_id, limit=limit, offset=-limit))
 
     if video:
         with click.progressbar(files_for_download['video'],

@@ -26,6 +26,7 @@ tgarc save [OPTIONS] [SRC]...
     --files / --no-files        не выгружать остальные типы файлов (audio, document, sticker, animation, voice, video_note)
     --max-size INTEGER          максимальный размер одного выгружаемого файла в МБ
     --update                    обновить ранее выгруженные данные
+    --private                   выгрузить приватный чат/канал
     --format [csv|json]         формат сохранения сообщений CSV или JSON(l) формат.  [default: json]
                                 * CSV не имплементировано
     --input FILENAME            файл со списком названий чатов и каналов или ссылок на них если у них нет названия и они приватные.
